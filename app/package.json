@@ -1,0 +1,25 @@
+{
+  "name": "pujian-app",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "test:e2e": "node scripts/e2e.mjs",
+    "test:features": "node scripts/features.e2e.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vexflow": "^4.2.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "esbuild": "^0.21.5",
+    "puppeteer-core": "^25.18.1",
+    "typescript": "^5.6.3"
+  }
+}

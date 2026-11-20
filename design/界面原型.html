@@ -1,0 +1,1722 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>谱间 · 五线谱练习室（设计原型）</title>
+<style>
+  :root{
+    --paper:#f4efe6;
+    --paper2:#ece5d7;
+    --card:#fffcf6;
+    --ink:#201f1c;
+    --ink2:#5f5b52;
+    --muted:#8b8578;
+    --line:#ddd4c3;
+    --accent:#b0522f;
+    --accent-soft:#f2ddd2;
+    --green:#3c7455;
+    --green-soft:#dcebe1;
+    --red:#ad3b36;
+    --red-soft:#f6dcd9;
+    --gold:#b8892c;
+    --r:14px;
+    --shadow:0 1px 2px rgba(50,38,18,.05), 0 10px 30px -18px rgba(50,38,18,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit}
+  .app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    position:sticky;top:0;height:100vh;padding:22px 16px 18px;
+    border-right:1px solid var(--line);min-width:0;
+    background:linear-gradient(180deg,#f8f3ea,#f0e9dc);
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .brand{display:flex;align-items:center;gap:11px;padding:0 6px 8px}
+  .logo{
+    width:40px;height:40px;border-radius:12px;flex:none;
+    background:var(--ink);color:#f7f1e6;
+    display:grid;place-items:center;font-size:21px;
+  }
+  .bname{font-size:17px;font-weight:700;letter-spacing:1px}
+  .bsub{font-size:11.5px;color:var(--muted);letter-spacing:2px}
+  .nav{display:flex;flex-direction:column;gap:3px;margin-top:14px}
+  .nav button{
+    display:flex;align-items:center;gap:10px;width:100%;
+    padding:10px 12px;border:0;border-radius:10px;background:transparent;
+    color:var(--ink2);font-size:14.5px;cursor:pointer;text-align:left;
+    transition:background .15s,color .15s;
+  }
+  .nav button:hover{background:rgba(60,45,20,.05)}
+  .nav button.active{background:var(--card);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+  .nav .ico{width:20px;text-align:center;font-size:15px;opacity:.85}
+  .side-foot{margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .side-foot b{color:var(--accent)}
+  .side-foot p{margin:6px 0 0;line-height:1.45}
+
+  /* ---------- layout ---------- */
+  .main{min-width:0;width:100%;max-width:1220px;margin:0 auto;padding:26px 34px 64px}
+  .view{display:none}
+  .view.active{display:block}
+  .topline{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  h1{font-size:22px;margin:0 0 3px;letter-spacing:.2px}
+  h2{font-size:15px;margin:0}
+  .sub{color:var(--muted);font-size:13px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grid{display:grid;gap:16px}
+  .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .mt{margin-top:16px}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow)}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .card-head h2{font-size:15px}
+  .pill{font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--paper2);color:var(--ink2);white-space:nowrap}
+  .pill.hot{background:var(--accent-soft);color:#8d3f22}
+
+  .stat{padding:16px 18px}
+  .stat .k{font-size:12.5px;color:var(--muted)}
+  .stat .v{font-size:27px;font-weight:680;letter-spacing:-.6px;margin-top:2px;font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:12.5px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:3px}
+  .stat .d{font-size:11.5px;color:var(--green);margin-top:2px}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:9px 16px;border-radius:10px;font-size:13.5px;font-weight:600;
+    border:1px solid transparent;cursor:pointer;white-space:nowrap;
+    transition:transform .08s, background .15s, border-color .15s;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);color:#fff8f2;border-color:var(--accent)}
+  .btn-primary:hover{background:#9c4726}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink2)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-sm{padding:6px 12px;font-size:12.5px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  /* ---------- home ---------- */
+  .task{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+  .task:first-of-type{border-top:0}
+  .check{
+    width:22px;height:22px;flex:none;border-radius:50%;border:1.5px solid #c9c0ae;
+    background:transparent;cursor:pointer;position:relative;
+  }
+  .task.done .check{background:var(--green);border-color:var(--green)}
+  .task.done .check::after{content:"✓";position:absolute;inset:0;color:#fff;font-size:13px;line-height:19px;text-align:center}
+  .task.done .task-body{opacity:.5;text-decoration:line-through}
+  .task-body{flex:1;min-width:0}
+  .task-body .t{font-size:14px;font-weight:600}
+  .task-body .s{font-size:12px;color:var(--muted)}
+
+  .skill{margin-bottom:14px}
+  .skill:last-child{margin-bottom:0}
+  .skill-h{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .skill-h span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+  .bar{height:7px;border-radius:99px;background:var(--paper2);overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#c9724b,var(--accent))}
+
+  .list-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+  .list-row:first-child{border-top:0}
+  .list-row .l{display:flex;align-items:center;gap:10px;color:var(--ink2)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+  .list-row .r{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+
+  /* ---------- staff ---------- */
+  .staff{
+    background:#fffdf8;border:1px solid var(--line);border-radius:12px;
+    padding:4px 6px;overflow:hidden;
+  }
+  .staff svg{display:block;width:100%;height:auto;color:var(--ink)}
+
+  /* ---------- feedback ---------- */
+  .feedback{
+    margin:14px 0;padding:11px 14px;border-radius:10px;min-height:44px;
+    display:flex;align-items:center;gap:8px;font-size:14px;
+    background:var(--paper2);color:var(--ink2);
+    transition:background .2s,color .2s;
+  }
+  .feedback.ok{background:var(--green-soft);color:#2c5c43}
+  .feedback.bad{background:var(--red-soft);color:#8c2b26}
+  .feedback.warn{background:#f7ecd2;color:#7c5b18}
+
+  /* ---------- sight reading ---------- */
+  .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:2px}
+  .opt{
+    min-height:82px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);font-size:23px;font-weight:650;cursor:pointer;
+    transition:.15s;font-variant-numeric:tabular-nums;
+  }
+  .opt:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+  .opt.ok{background:var(--green-soft);border-color:#8dbb9f;color:#2c5c43}
+  .opt.bad{background:var(--red-soft);border-color:#d9a29c;color:#8c2b26}
+  .opt:disabled{cursor:default;transform:none}
+  .opt:disabled:hover{border-color:var(--line);color:inherit}
+  .opt.ok:disabled:hover{border-color:#8dbb9f;color:#2c5c43}
+  .opt.bad:disabled:hover{border-color:#d9a29c;color:#8c2b26}
+
+  .seg{display:inline-flex;background:var(--paper2);border-radius:10px;padding:3px;gap:2px}
+  .seg button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:12.5px;color:var(--ink2);cursor:pointer}
+  .seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+  .stats-row{display:flex;gap:22px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);align-items:center}
+  .stats-row b{color:var(--ink);font-size:14px;font-variant-numeric:tabular-nums}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;background:var(--paper2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--ink2)}
+
+  /* ---------- piano ---------- */
+  .piano-wrap{
+    position:relative;height:158px;border-radius:10px;overflow:hidden;
+    background:#fff;box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .piano{position:relative;height:100%;display:flex}
+  .wkey{
+    flex:none;height:100%;border-right:1px solid #d9d2c4;
+    background:linear-gradient(#fffefb,#f4efe4);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;
+    padding-bottom:7px;
+    font-size:10px;color:#a49b8a;cursor:pointer;user-select:none;
+    transition:background .08s;
+  }
+  .wkey .klabel{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;font-weight:700;color:#8a8272;line-height:1}
+  .wkey .knote{font-size:9.5px;color:#b7ae9d;line-height:1}
+  .wkey:last-child{border-right:0}
+  .wkey.active{background:var(--accent-soft);color:var(--accent)}
+  .wkey.active .klabel{color:var(--accent)}
+  .bkey{
+    position:absolute;top:0;height:63%;z-index:2;
+    background:linear-gradient(#3b3833,#1c1a17);
+    border-radius:0 0 4px 4px;cursor:pointer;
+    box-shadow:0 2px 4px rgba(0,0,0,.35);
+    transition:background .08s;
+    display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;
+  }
+  .bkey .klabel{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#b9b1a3;line-height:1}
+  .bkey.active{background:var(--accent)}
+  .bkey.active .klabel{color:#fff3ea}
+
+  .kbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:12.5px;color:var(--muted)}
+  .kbar b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .kbar .seg button{padding:5px 11px;font-size:12px}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+  /* ---------- violin ---------- */
+  .dial-wrap{display:flex;flex-direction:column;align-items:center}
+  #dial{width:100%;max-width:390px;height:auto;display:block}
+  .tuner-read{text-align:center;margin-top:-12px}
+  .tuner-read .n{font-size:34px;font-weight:700;letter-spacing:1px;line-height:1.1}
+  .tuner-read .f{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .tuner-read .c{font-size:13px;margin-top:3px;font-weight:600;font-variant-numeric:tabular-nums}
+  .strings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 12px}
+  .strings button{
+    padding:9px 0;border-radius:9px;border:1px solid var(--line);background:var(--card);
+    font-size:13px;cursor:pointer;transition:.15s;
+  }
+  .strings button.on{background:var(--ink);color:#f7f1e6;border-color:var(--ink)}
+  .strings button small{display:block;font-size:10px;opacity:.6;font-weight:400}
+  #curve{width:100%;height:auto;display:block}
+
+  /* ---------- progress ---------- */
+  .heatmap{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,22px);grid-auto-columns:22px;gap:5px;justify-content:center}
+  .hm{border-radius:4px;background:#e9e3d6}
+  .legend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-top:12px;justify-content:flex-end}
+  .legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+  .weak{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+  .weak:first-of-type{border-top:0}
+  .weak .w-t{font-size:13.5px;font-weight:600}
+  .weak .w-s{font-size:12px;color:var(--muted)}
+  .weak .w-p{font-size:12px;color:var(--red);font-variant-numeric:tabular-nums}
+
+  /* ---------- tools ---------- */
+  .bpm-big{font-size:52px;font-weight:700;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
+  .bpm-big small{font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:4px}
+  input[type=range]{width:100%;accent-color:var(--accent);margin:14px 0 6px}
+  .beats{display:flex;gap:8px;margin:14px 0}
+  .beats i{width:10px;height:10px;border-radius:50%;background:var(--paper2);border:1px solid #cfc6b4;transition:.1s}
+  .beats i.on{background:var(--accent);border-color:var(--accent);transform:scale(1.25)}
+  .pendulum{height:64px;display:grid;place-items:center;overflow:hidden}
+  .pendulum i{display:block;width:3px;height:58px;background:var(--ink);border-radius:2px;transform-origin:50% 0;transition:transform .12s linear}
+  .pendulum i.tick{transform:rotate(16deg)}
+  .pendulum i.tock{transform:rotate(-16deg)}
+  .rec-bars{display:flex;align-items:flex-end;gap:3px;height:58px;margin:10px 0}
+  .rec-bars i{flex:1;background:var(--accent);opacity:.35;border-radius:2px;height:20%}
+
+  /* ---------- library ---------- */
+  .notice{background:#fbf4e4;border-color:#e9dbbc}
+  .notice-t{font-size:14px;font-weight:700;margin-bottom:4px}
+  .notice p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.65}
+  .piece{display:flex;flex-direction:column;gap:7px;padding:16px 18px}
+  .piece h3{font-size:16px;margin:0;letter-spacing:.2px}
+  .piece-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .diff{font-size:10px;letter-spacing:2.5px;color:var(--accent);white-space:nowrap}
+  .piece .composer{font-size:12px;color:var(--muted);line-height:1.5;min-height:36px}
+  .piece-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:6px}
+  .status{font-size:11px;padding:3px 9px;border-radius:99px;white-space:nowrap}
+  .status.ready{background:var(--green-soft);color:#2c5c43}
+  .status.soon{background:var(--paper2);color:var(--muted)}
+  .status.import{background:#f7ecd2;color:#7c5b18}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:30px;z-index:100;transform:translate(-50%,16px);
+    background:var(--ink);color:#f8f2e7;font-size:13px;line-height:1.5;
+    padding:10px 18px;border-radius:10px;max-width:80vw;
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    box-shadow:0 12px 30px -12px rgba(0,0,0,.5);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1000px){
+    .app{grid-template-columns:1fr;grid-template-rows:auto 1fr;align-content:start}
+    .sidebar{
+      position:sticky;top:0;z-index:20;height:auto;flex-direction:row;align-items:center;gap:12px;
+      padding:10px 14px;border-right:0;border-bottom:1px solid var(--line);
+      overflow-x:auto;
+    }
+    .brand{padding:0;flex:none}
+    .logo{width:34px;height:34px;font-size:18px;border-radius:10px}
+    .bsub{display:none}
+    .nav{flex-direction:row;margin:0;gap:2px;min-width:0}
+    .nav button{padding:7px 10px;font-size:13px;white-space:nowrap}
+    .nav button .ico{display:none}
+    .side-foot{display:none}
+    .main{padding:18px 16px 52px}
+  }
+  @media (max-width:760px){
+    .cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .cols-2,.cols-3{grid-template-columns:1fr}
+    .opts{grid-template-columns:repeat(2,1fr)}
+    h1{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== 侧边栏 ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">♪</div>
+      <div>
+        <div class="bname">谱间</div>
+        <div class="bsub">练习室</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="主导航">
+      <button class="active" data-view="home"><span class="ico">◈</span>首页</button>
+      <button data-view="sight"><span class="ico">♩</span>识谱训练</button>
+      <button data-view="piano"><span class="ico">▤</span>钢琴</button>
+      <button data-view="violin"><span class="ico">𝄢</span>小提琴</button>
+      <button data-view="library"><span class="ico">▦</span>曲库</button>
+      <button data-view="progress"><span class="ico">◷</span>进度</button>
+      <button data-view="tools"><span class="ico">⚙</span>工具箱</button>
+    </nav>
+    <div class="side-foot">
+      <div>🔥 连续 <b>12</b> 天</div>
+      <p>可交互设计原型 v0.1<br>所有数据均为演示用假数据</p>
+    </div>
+  </aside>
+
+  <!-- ===================== 主内容 ===================== -->
+  <main class="main">
+
+    <!-- ---------------- 首页 ---------------- -->
+    <section id="view-home" class="view active">
+      <div class="topline">
+        <div>
+          <h1 id="greeting">晚上好，练一会儿吧</h1>
+          <div class="sub" id="today-line">—</div>
+        </div>
+        <button class="btn btn-primary" data-goto="sight">开始今日任务</button>
+      </div>
+
+      <div class="grid cols-4">
+        <div class="card stat"><div class="k">连续练习</div><div class="v">12<small>天</small></div><div class="d">↑ 比上周多 2 天</div></div>
+        <div class="card stat"><div class="k">本周练习</div><div class="v">96<small>分钟</small></div><div class="d">目标 120 分钟</div></div>
+        <div class="card stat"><div class="k">识谱正确率</div><div class="v">87<small>%</small></div><div class="d">↑ 4% · 近 7 天</div></div>
+        <div class="card stat"><div class="k">音准中位偏差</div><div class="v">±9<small>音分</small></div><div class="d">↑ 已进入 ±10</div></div>
+      </div>
+
+      <div class="grid cols-2 mt">
+        <div class="card">
+          <div class="card-head"><h2>今日任务</h2><span class="pill hot">3 项 · 约 17 分钟</span></div>
+          <div class="task">
+            <button class="check" aria-label="标记完成"></button>
+            <div class="task-body"><div class="t">识谱速认 · 高音谱号 L2</div><div class="s">20 题 · 约 5 分钟 · 今天到期 12 张</div></div>
+            <button class="btn btn-ghost btn-sm" data-goto="sight">开始</button>
+          </div>
+          <div class="task">
+            <button class="check" aria-label="标记完成"></button>
+            <div class="task-body"><div class="t">钢琴 · 《小星星》前 4 小节</div><div class="s">单音跟弹 · 分手 · 约 8 分钟</div></div>
+            <button class="btn btn-ghost btn-sm" data-goto="piano">开始</button>
+          </div>
+          <div class="task">
+            <button class="check" aria-label="标记完成"></button>
+            <div class="task-body"><div class="t">小提琴 · A 弦长音</div><div class="s">±10 音分保持 2 秒 · 约 4 分钟</div></div>
+            <button class="btn btn-ghost btn-sm" data-goto="violin">开始</button>
+          </div>
+          <div class="hint">勾选任务会记录到练习日志；错题会自动进入明天的复习队列。</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>四条学习线</h2><span class="pill">Level 1–10</span></div>
+          <div class="skill">
+            <div class="skill-h"><span>识谱</span><span>L4 · 72%</span></div>
+            <div class="bar"><i style="width:72%"></i></div>
+          </div>
+          <div class="skill">
+            <div class="skill-h"><span>节奏</span><span>L2 · 55%</span></div>
+            <div class="bar"><i style="width:55%"></i></div>
+          </div>
+          <div class="skill">
+            <div class="skill-h"><span>钢琴</span><span>L2 · 48%</span></div>
+            <div class="bar"><i style="width:48%"></i></div>
+          </div>
+          <div class="skill">
+            <div class="skill-h"><span>小提琴</span><span>L3 · 61%</span></div>
+            <div class="bar"><i style="width:61%"></i></div>
+          </div>
+          <div class="hint">掌握度 = 0.6 × 正确率 + 0.4 × 反应时间得分；达标后解锁下一级。</div>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt">
+        <div class="card">
+          <div class="card-head"><h2>最近练习</h2><span class="pill">近 7 天</span></div>
+          <div class="list-row"><div class="l"><i class="dot"></i>识谱速认 · 高音谱号</div><div class="r">今天 19:40 · 87% · 6:20</div></div>
+          <div class="list-row"><div class="l"><i class="dot"></i>钢琴单音跟弹</div><div class="r">昨天 21:05 · 74% · 9:10</div></div>
+          <div class="list-row"><div class="l"><i class="dot"></i>小提琴长音</div><div class="r">昨天 20:40 · ±12 音分 · 4:30</div></div>
+          <div class="list-row"><div class="l"><i class="dot"></i>节奏拍击</div><div class="r">11 月 17 日 · 81% · 5:00</div></div>
+          <div class="list-row"><div class="l"><i class="dot"></i>视奏训练</div><div class="r">11 月 16 日 · 34 CPM · 10:00</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>本周建议</h2><span class="pill">自动生成</span></div>
+          <div class="weak">
+            <div><div class="w-t">低音谱号 · 第三线以下</div><div class="w-s">错题 7 次，建议练 10 题</div></div>
+            <button class="btn btn-ghost btn-sm" data-goto="sight">去练</button>
+          </div>
+          <div class="weak">
+            <div><div class="w-t">附点四分音符</div><div class="w-s">节奏偏差偏大，建议跟节拍器</div></div>
+            <button class="btn btn-ghost btn-sm" data-goto="tools">去练</button>
+          </div>
+          <div class="weak">
+            <div><div class="w-t">小提琴 A 弦第二指</div><div class="w-s">平均偏高 22 音分</div></div>
+            <button class="btn btn-ghost btn-sm" data-goto="violin">去练</button>
+          </div>
+          <div class="hint">建议基于错题本与 SRS 队列生成；每天 3 条，不堆积。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- 识谱训练 ---------------- -->
+    <section id="view-sight" class="view">
+      <div class="topline">
+        <div>
+          <h1>识谱训练</h1>
+          <div class="sub">看到音符，选出正确的音名</div>
+        </div>
+        <div class="row">
+          <div class="seg" id="clef-seg">
+            <button class="on" data-clef="treble">高音谱号</button>
+            <button data-clef="bass">低音谱号</button>
+          </div>
+          <div class="seg" id="level-seg">
+            <button class="on" data-level="1">L1</button>
+            <button data-level="2">L2</button>
+            <button data-level="3">L3</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="pill">本组 20 题 · 限时 5 秒/题</span>
+          <button class="btn btn-ghost btn-sm" id="sr-reset">重新开始</button>
+        </div>
+        <div class="staff" id="sr-staff"></div>
+        <div class="feedback" id="sr-feedback">准备好了吗？点击下方音名作答</div>
+        <div class="opts" id="sr-options"></div>
+        <div class="stats-row" style="margin-top:16px">
+          <span>正确率 <b id="sr-accuracy">—</b></span>
+          <span>已答 <b id="sr-count">0</b></span>
+          <span>连对 <b id="sr-streak">0</b></span>
+          <span>用时 <b id="sr-time">0:00</b></span>
+          <span style="margin-left:auto">快捷键 <span class="kbd">1</span>–<span class="kbd">4</span> 作答</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- 钢琴 ---------------- -->
+    <section id="view-piano" class="view">
+      <div class="topline">
+        <div>
+          <h1>钢琴 · 单音跟弹</h1>
+          <div class="sub">谱面高亮当前音 → 在键盘上弹出 → 即时判断</div>
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost" id="piano-demo">▶ 示范</button>
+          <button class="btn btn-primary" id="piano-reset">重新开始</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>《小星星》片段 · 右手</h2>
+          <span class="pill">7 个音 · 60 BPM · 单音</span>
+        </div>
+        <div class="staff" id="piano-staff"></div>
+        <div class="feedback" id="piano-feedback">点击琴键，或直接敲电脑键盘</div>
+
+        <div class="kbar">
+          <span class="pill hot">电脑键盘</span>
+          <div class="seg" id="piano-layout">
+            <button class="on" data-layout="split">双手分区</button>
+            <button data-layout="rows">双排两八度</button>
+          </div>
+          <span>音域 <b id="kb-range">C5–E6</b></span>
+          <button class="btn btn-ghost btn-sm" id="kb-down">− 八度</button>
+          <button class="btn btn-ghost btn-sm" id="kb-up">+ 八度</button>
+          <span style="flex:1"></span>
+          <div class="seg" id="piano-mode">
+            <button class="on" data-mode="follow">跟弹</button>
+            <button data-mode="free">自由弹奏</button>
+          </div>
+        </div>
+
+        <div class="piano-wrap"><div class="piano" id="piano-keys"></div></div>
+        <div class="stats-row" style="margin-top:12px">
+          <span>进度 <b id="piano-progress">0 / 7</b></span>
+          <span>正确 <b id="piano-ok">0</b></span>
+          <span>错误 <b id="piano-bad">0</b></span>
+        </div>
+        <div class="hint">
+          按住键发声、松开止音。<span id="kb-hint">左手 A–G 弹低音、右手 H–; 弹高音；黑键在上一排 W E T Y U O P</span>。<span class="kbd">[</span> <span class="kbd">]</span> 整体移八度；音频由浏览器实时合成。
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- 小提琴 ---------------- -->
+    <section id="view-violin" class="view">
+      <div class="topline">
+        <div>
+          <h1>小提琴 · 音准训练</h1>
+          <div class="sub">调音器 + 长音音准曲线，实时看偏差</div>
+        </div>
+        <div class="row"><span class="pill">A4 = 440 Hz</span></div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card dial-wrap">
+          <div class="card-head" style="align-self:stretch"><h2>调音器</h2><span class="pill">模拟演示</span></div>
+          <svg id="dial" viewBox="0 0 320 210" role="img" aria-label="调音表盘"></svg>
+          <div class="tuner-read">
+            <div class="n" id="tuner-note">A4</div>
+            <div class="f" id="tuner-freq">440.0 Hz</div>
+            <div class="c" id="tuner-cents" style="color:var(--green)">+0 音分</div>
+          </div>
+          <div class="strings" id="string-btns">
+            <button data-note="G3" class="on">G 弦<small>196.0 Hz</small></button>
+            <button data-note="D4">D 弦<small>293.7 Hz</small></button>
+            <button data-note="A4">A 弦<small>440.0 Hz</small></button>
+            <button data-note="E5">E 弦<small>659.3 Hz</small></button>
+          </div>
+          <button class="btn btn-primary" id="tuner-toggle" style="width:100%">开始模拟检测</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>长音音准曲线</h2><span class="pill" id="curve-target">目标 A4</span></div>
+          <svg id="curve" viewBox="0 0 560 140" role="img" aria-label="音准曲线"></svg>
+          <div class="grid cols-3" style="margin-top:14px">
+            <div class="stat" style="padding:8px 0"><div class="k">平均偏差</div><div class="v" style="font-size:22px" id="avg-dev">—</div></div>
+            <div class="stat" style="padding:8px 0"><div class="k">稳定率 ±10</div><div class="v" style="font-size:22px" id="stable-pct">—</div></div>
+            <div class="stat" style="padding:8px 0"><div class="k">波动范围</div><div class="v" style="font-size:22px" id="range-dev">—</div></div>
+          </div>
+          <div class="hint">正式版：拉动长音时实时绘制；结束后给出稳定性评分与改进建议。</div>
+        </div>
+      </div>
+
+      <div class="card mt">
+        <div class="card-head"><h2>指板图 · 第一把位</h2><span class="pill">点击圆点试听</span></div>
+        <svg id="fretboard" viewBox="0 0 560 160" role="img" aria-label="小提琴指板第一把位"></svg>
+      </div>
+    </section>
+
+    <!-- ---------------- 曲库 ---------------- -->
+    <section id="view-library" class="view">
+      <div class="topline">
+        <div>
+          <h1>曲库</h1>
+          <div class="sub">内置公版曲 · 现代曲目导入个人练习库</div>
+        </div>
+        <div class="seg" id="lib-filter">
+          <button class="on" data-filter="all">全部</button>
+          <button data-filter="piano">钢琴</button>
+          <button data-filter="violin">小提琴</button>
+        </div>
+      </div>
+
+      <div class="card notice">
+        <div class="notice-t">关于《梦中的婚礼》《La La Land》这类现代曲目</div>
+        <p>它们仍在版权保护期，站内不提供曲谱文件。你可以把自己购买的 MusicXML 导入「个人练习库」，只保存在本机，用于自己练习；内置曲库只收录公版作品，可放心长期使用。</p>
+      </div>
+
+      <div class="grid cols-3 mt" id="lib-grid"></div>
+    </section>
+
+    <!-- ---------------- 进度 ---------------- -->
+    <section id="view-progress" class="view">
+      <div class="topline">
+        <div><h1>进度</h1><div class="sub">近 24 周 · 每天练了多少、错在哪</div></div>
+        <button class="btn btn-ghost">导出数据（JSON）</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>练习热力图</h2><span class="pill">最近 24 周</span></div>
+        <div class="heatmap" id="heatmap"></div>
+        <div class="legend">
+          少
+          <i style="background:#e9e3d6"></i><i style="background:#dce9df"></i><i style="background:#b6d3bf"></i><i style="background:#7fb193"></i><i style="background:#4c8567"></i>
+          多
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt">
+        <div class="card">
+          <div class="card-head"><h2>技能树</h2><span class="pill">L4 / L10</span></div>
+          <div class="skill"><div class="skill-h"><span>识谱 · 高音谱号</span><span>72%</span></div><div class="bar"><i style="width:72%"></i></div></div>
+          <div class="skill"><div class="skill-h"><span>识谱 · 低音谱号</span><span>38%</span></div><div class="bar"><i style="width:38%"></i></div></div>
+          <div class="skill"><div class="skill-h"><span>节奏 · 时值</span><span>55%</span></div><div class="bar"><i style="width:55%"></i></div></div>
+          <div class="skill"><div class="skill-h"><span>钢琴 · 单音跟弹</span><span>48%</span></div><div class="bar"><i style="width:48%"></i></div></div>
+          <div class="skill"><div class="skill-h"><span>小提琴 · 音准</span><span>61%</span></div><div class="bar"><i style="width:61%"></i></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>薄弱点 Top 3</h2><span class="pill hot">优先复习</span></div>
+          <div class="weak">
+            <div><div class="w-t">低音谱号 · 第三线以下</div><div class="w-s">正确率 54% · 近期错 7 次</div></div>
+            <div class="w-p">54%</div>
+          </div>
+          <div class="weak">
+            <div><div class="w-t">附点四分音符</div><div class="w-s">节奏偏差中位 180ms</div></div>
+            <div class="w-p">61%</div>
+          </div>
+          <div class="weak">
+            <div><div class="w-t">A 弦第二指</div><div class="w-s">平均偏高 22 音分</div></div>
+            <div class="w-p">—</div>
+          </div>
+          <div class="hint">复习队列：今天到期 12 张，其中 5 张是反复错的卡片。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- 工具箱 ---------------- -->
+    <section id="view-tools" class="view">
+      <div class="topline"><div><h1>工具箱</h1><div class="sub">练琴时随手要用的小东西</div></div></div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-head"><h2>节拍器</h2><span class="pill">4/4 拍</span></div>
+          <div class="row" style="align-items:flex-end;justify-content:space-between">
+            <div class="bpm-big" id="bpm">72<small>BPM</small></div>
+            <button class="btn btn-primary" id="metro-toggle">▶ 开始</button>
+          </div>
+          <input type="range" id="bpm-range" min="40" max="208" value="72" aria-label="BPM">
+          <div class="beats" id="beat-dots"><i></i><i></i><i></i><i></i></div>
+          <div class="pendulum"><i id="pend"></i></div>
+          <div class="row" style="justify-content:space-between">
+            <span class="hint" style="margin:0">按 <span class="kbd">空格</span> 开始/停止</span>
+            <button class="btn btn-ghost btn-sm" id="tap">Tap tempo</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>录音机</h2><span class="pill">M4 实现</span></div>
+          <div class="rec-bars" id="rec-bars"></div>
+          <div class="hint">本地录音、波形、AB 循环、变速不变调。音频只保存在浏览器里，不上传。</div>
+          <button class="btn btn-ghost" style="width:100%;margin-top:12px" disabled>开始录音（后续版本）</button>
+        </div>
+      </div>
+
+      <div class="card mt">
+        <div class="card-head"><h2>常用入口</h2><span class="pill">练习前 30 秒</span></div>
+        <div class="row">
+          <button class="btn btn-ghost" data-goto="violin">调音器</button>
+          <button class="btn btn-ghost" data-goto="sight">识谱速认</button>
+          <button class="btn btn-ghost" data-goto="piano">钢琴跟弹</button>
+          <button class="btn btn-ghost" data-goto="progress">看进度</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:20px">这个原型需要开启 JavaScript 才能交互。</p></noscript>
+
+<script>
+(function(){
+  "use strict";
+
+  window.addEventListener('error', function(e){
+    document.documentElement.setAttribute('data-js-error', String(e.message || 'error'));
+  });
+
+  /* =========================================================
+     基础工具
+     ========================================================= */
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+  var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  var LETTERS = ['C','D','E','F','G','A','B'];
+  var SEMI = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  var INK = '#201f1c';
+  var ACCENT = '#b0522f';
+
+  function parseNote(name){
+    var m = /^([A-G])([#b]?)(-?\d)$/.exec(name);
+    if(!m) return null;
+    return { letter:m[1], acc:m[2], oct:+m[3] };
+  }
+  function midiOf(name){
+    var p = parseNote(name);
+    var n = (p.oct + 1) * 12 + SEMI[p.letter];
+    if(p.acc === '#') n++;
+    if(p.acc === 'b') n--;
+    return n;
+  }
+  function freqOf(name){ return 440 * Math.pow(2, (midiOf(name) - 69) / 12); }
+  function diaIndex(name){
+    var p = parseNote(name);
+    return p.oct * 7 + LETTERS.indexOf(p.letter);
+  }
+  function nameFromDia(idx){
+    var oct = Math.floor(idx / 7);
+    var letter = LETTERS[((idx % 7) + 7) % 7];
+    return letter + oct;
+  }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+  /* =========================================================
+     音频
+     ========================================================= */
+  var ac = null;
+  function audio(){
+    if(!ac){
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      ac = new Ctx();
+    }
+    if(ac.state === 'suspended') ac.resume();
+    return ac;
+  }
+  function playTone(freq, dur, vol){
+    dur = dur || 0.7; vol = vol || 0.16;
+    var ctx = audio(), t = ctx.currentTime;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(ctx.destination);
+    [1, 2, 3].forEach(function(h, i){
+      var o = ctx.createOscillator();
+      o.type = i === 0 ? 'triangle' : 'sine';
+      o.frequency.value = freq * h;
+      var hg = ctx.createGain();
+      hg.gain.value = i === 0 ? 1 : 0.26 / (i + 1);
+      o.connect(hg).connect(g);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    });
+  }
+  function playClick(accent){
+    var ctx = audio();
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = accent ? 1680 : 1180;
+    g.gain.setValueAtTime(accent ? 0.10 : 0.055, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.045);
+    o.connect(g).connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.05);
+  }
+
+  /* =========================================================
+     五线谱渲染
+     ========================================================= */
+  var CLEF = {
+    treble: { bottom:'E4', glyph:'\uD834\uDD1E', gx:38, gy:88, gsize:58 },
+    bass:   { bottom:'G2', glyph:'\uD834\uDD22', gx:38, gy:72, gsize:44 }
+  };
+
+  function staffSVG(notes, clefName){
+    var c = CLEF[clefName];
+    var baseIdx = diaIndex(c.bottom);
+    var W = 620, topY = 48, bottomY = 88, gap = 10, x0 = 24, x1 = 596;
+    var yOf = function(n){ return bottomY - (diaIndex(n.name) - baseIdx) * 5; };
+    var ys = notes.map(yOf);
+    var vbTop = Math.min.apply(null, [topY - 26].concat(ys.map(function(y){ return y - 26; })));
+    var vbBot = Math.max.apply(null, [bottomY + 26].concat(ys.map(function(y){ return y + 26; })));
+    var H = vbBot - vbTop;
+    var s = '<svg viewBox="0 ' + vbTop + ' ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+    s += '<line x1="' + x0 + '" y1="' + topY + '" x2="' + x0 + '" y2="' + bottomY + '" stroke="' + INK + '" stroke-width="1.3"/>';
+    for(var i = 0; i < 5; i++){
+      var ly = topY + i * gap;
+      s += '<line x1="' + x0 + '" y1="' + ly + '" x2="' + x1 + '" y2="' + ly + '" stroke="' + INK + '" stroke-width="1.1" opacity="0.72"/>';
+    }
+    s += '<text x="' + c.gx + '" y="' + c.gy + '" font-size="' + c.gsize + '" fill="' + INK + '" font-family="Bravura, Apple Symbols, Noto Music, Segoe UI Symbol, serif">' + c.glyph + '</text>';
+
+    var xs = [];
+    var n = notes.length;
+    for(var k = 0; k < n; k++){
+      xs.push(notes[k].x != null ? notes[k].x : (n === 1 ? 320 : 172 + k * 50));
+    }
+
+    notes.forEach(function(note, idx){
+      var x = xs[idx];
+      var y = bottomY - (diaIndex(note.name) - baseIdx) * 5;
+      var p = parseNote(note.name);
+
+      if(note.hl){
+        s += '<circle cx="' + x + '" cy="' + y + '" r="20" fill="' + ACCENT + '" opacity="0.13"/>';
+      }
+      if(y < topY){
+        for(var ly2 = topY - gap; ly2 >= y - 0.1; ly2 -= gap){
+          s += '<line x1="' + (x - 14) + '" y1="' + ly2 + '" x2="' + (x + 14) + '" y2="' + ly2 + '" stroke="' + INK + '" stroke-width="1.1" opacity="0.8"/>';
+        }
+      }
+      if(y > bottomY){
+        for(var ly3 = bottomY + gap; ly3 <= y + 0.1; ly3 += gap){
+          s += '<line x1="' + (x - 14) + '" y1="' + ly3 + '" x2="' + (x + 14) + '" y2="' + ly3 + '" stroke="' + INK + '" stroke-width="1.1" opacity="0.8"/>';
+        }
+      }
+      if(p.acc){
+        s += '<text x="' + (x - 21) + '" y="' + (y + 6) + '" font-size="18" fill="' + INK + '">' + (p.acc === '#' ? '♯' : '♭') + '</text>';
+      }
+      s += '<ellipse cx="' + x + '" cy="' + y + '" rx="7.4" ry="5.3" transform="rotate(-20 ' + x + ' ' + y + ')" fill="' + INK + '"/>';
+      var up = y > 68;
+      var sx = up ? x + 6.6 : x - 6.6;
+      var ex = sx;
+      var ey = up ? y - 34 : y + 34;
+      s += '<line x1="' + sx + '" y1="' + (y - 1) + '" x2="' + ex + '" y2="' + ey + '" stroke="' + INK + '" stroke-width="2"/>';
+    });
+
+    s += '</svg>';
+    return s;
+  }
+
+  function renderStaff(el, notes, clef){
+    el.innerHTML = staffSVG(notes, clef);
+  }
+
+  /* =========================================================
+     路由
+     ========================================================= */
+  var VIEWS = ['home','sight','piano','violin','library','progress','tools'];
+  var currentView = 'home';
+
+  function go(v){
+    if(VIEWS.indexOf(v) < 0) v = 'home';
+    if(currentView === 'piano' && v !== 'piano'){ try{ releaseAll(); }catch(e){} }
+    currentView = v;
+    $$('.view').forEach(function(s){ s.classList.toggle('active', s.id === 'view-' + v); });
+    $$('.nav button').forEach(function(b){ b.classList.toggle('active', b.dataset.view === v); });
+    try{ history.replaceState(null, '', '#' + v); }catch(e){}
+    window.scrollTo(0, 0);
+  }
+
+  $$('.nav button').forEach(function(b){
+    b.addEventListener('click', function(){ go(b.dataset.view); });
+  });
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('[data-goto]');
+    if(t) go(t.dataset.goto);
+  });
+
+  /* =========================================================
+     首页
+     ========================================================= */
+  function initHome(){
+    var d = new Date();
+    var h = d.getHours();
+    var greet = h < 5 ? '夜深了，轻一点练' : h < 11 ? '早上好，先来 5 分钟识谱' : h < 14 ? '中午好，练一小会儿' : h < 18 ? '下午好，练一会儿吧' : '晚上好，练一会儿吧';
+    var el = $('#greeting');
+    if(el) el.textContent = greet;
+    var days = ['日','一','二','三','四','五','六'];
+    var line = $('#today-line');
+    if(line){
+      line.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 · 星期' + days[d.getDay()] + ' · 今日已练 18 分钟';
+    }
+    $$('.task .check').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        btn.closest('.task').classList.toggle('done');
+      });
+    });
+  }
+
+  /* =========================================================
+     识谱训练
+     ========================================================= */
+  var SR = {
+    clef: 'treble',
+    level: 1,
+    total: 0,
+    correct: 0,
+    streak: 0,
+    best: 0,
+    locked: false,
+    current: null,
+    shownAt: 0,
+    startedAt: Date.now(),
+    timer: null
+  };
+  var SR_RANGES = {
+    treble: { 1: ['C4','C5'], 2: ['C4','C6'], 3: ['G3','A5'] },
+    bass:   { 1: ['C3','C4'], 2: ['C3','C5'], 3: ['E2','C4'] }
+  };
+
+  function srPool(){
+    var r = SR_RANGES[SR.clef][SR.level];
+    var a = diaIndex(r[0]), b = diaIndex(r[1]);
+    var out = [];
+    for(var i = a; i <= b; i++) out.push(nameFromDia(i));
+    return out;
+  }
+
+  function positionHint(name){
+    var base = diaIndex(CLEF[SR.clef].bottom);
+    var d = diaIndex(name) - base;
+    if(d < 0 || d > 8) return '';
+    if(d % 2 === 0) return '第' + (d / 2 + 1) + '线';
+    return '第' + ((d + 1) / 2) + '间';
+  }
+
+  function srUpdateStats(){
+    var acc = SR.total ? Math.round(SR.correct / SR.total * 100) : 0;
+    $('#sr-accuracy').textContent = SR.total ? acc + '%' : '—';
+    $('#sr-count').textContent = SR.total;
+    $('#sr-streak').textContent = SR.streak;
+  }
+
+  function srFeedback(text, cls){
+    var el = $('#sr-feedback');
+    el.textContent = text;
+    el.className = 'feedback' + (cls ? ' ' + cls : '');
+  }
+
+  function srNext(){
+    var pool = srPool();
+    var name = pool[Math.floor(Math.random() * pool.length)];
+    SR.current = name;
+    SR.shownAt = performance.now();
+    SR.locked = false;
+
+    renderStaff($('#sr-staff'), [{ name:name, hl:true }], SR.clef);
+
+    var opts = [name];
+    var guard = 0;
+    while(opts.length < 4 && guard++ < 200){
+      var cand = pool[Math.floor(Math.random() * pool.length)];
+      if(opts.indexOf(cand) < 0) opts.push(cand);
+    }
+    opts.sort(function(){ return Math.random() - 0.5; });
+
+    var box = $('#sr-options');
+    box.innerHTML = '';
+    opts.forEach(function(n, i){
+      var b = document.createElement('button');
+      b.className = 'opt';
+      b.type = 'button';
+      b.textContent = n;
+      b.dataset.note = n;
+      b.addEventListener('click', function(){ srAnswer(n, b); });
+      box.appendChild(b);
+    });
+  }
+
+  function srAnswer(note, btn){
+    if(SR.locked || !SR.current) return;
+    SR.locked = true;
+    var rt = performance.now() - SR.shownAt;
+    var ok = note === SR.current;
+    var buttons = $$('.opt');
+
+    buttons.forEach(function(b){
+      b.disabled = true;
+      if(b.dataset.note === SR.current) b.classList.add('ok');
+    });
+    if(!ok) btn.classList.add('bad');
+
+    SR.total++;
+    if(ok){
+      SR.correct++;
+      SR.streak++;
+      SR.best = Math.max(SR.best, SR.streak);
+      srFeedback('✓ ' + note + ' · ' + (rt / 1000).toFixed(1) + 's', 'ok');
+    } else {
+      SR.streak = 0;
+      var hint = positionHint(SR.current);
+      srFeedback('✗ 是 ' + SR.current + (hint ? '（' + hint + '）' : '') + '，你选了 ' + note, 'bad');
+    }
+    srUpdateStats();
+
+    setTimeout(function(){
+      if(SR.total >= 20){
+        srFeedback('本组完成！正确率 ' + Math.round(SR.correct / SR.total * 100) + '% · 最长连对 ' + SR.best, 'ok');
+        var box = $('#sr-options');
+        box.innerHTML = '<button class="btn btn-primary" style="grid-column:1/-1;min-height:60px" id="sr-again">再来一组</button>';
+        var again = $('#sr-again');
+        if(again) again.addEventListener('click', function(){ srReset(); });
+      } else {
+        srNext();
+      }
+    }, 850);
+  }
+
+  function srReset(){
+    SR.total = 0; SR.correct = 0; SR.streak = 0; SR.best = 0;
+    SR.startedAt = Date.now();
+    srUpdateStats();
+    srFeedback('准备好了吗？点击下方音名作答');
+    srNext();
+  }
+
+  function initSight(){
+    srNext();
+    srUpdateStats();
+    SR.timer = setInterval(function(){
+      if(currentView !== 'sight') return;
+      var s = Math.floor((Date.now() - SR.startedAt) / 1000);
+      $('#sr-time').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }, 1000);
+
+    $$('#clef-seg button').forEach(function(b){
+      b.addEventListener('click', function(){
+        SR.clef = b.dataset.clef;
+        $$('#clef-seg button').forEach(function(x){ x.classList.toggle('on', x === b); });
+        SR.total = 0; SR.correct = 0; SR.streak = 0;
+        srUpdateStats();
+        srFeedback('已切换为' + (SR.clef === 'treble' ? '高音谱号' : '低音谱号') + '，继续答题');
+        srNext();
+      });
+    });
+    $$('#level-seg button').forEach(function(b){
+      b.addEventListener('click', function(){
+        SR.level = +b.dataset.level;
+        $$('#level-seg button').forEach(function(x){ x.classList.toggle('on', x === b); });
+        SR.total = 0; SR.correct = 0; SR.streak = 0;
+        srUpdateStats();
+        srFeedback('已切换到 L' + SR.level + '，继续答题');
+        srNext();
+      });
+    });
+    var reset = $('#sr-reset');
+    if(reset) reset.addEventListener('click', srReset);
+  }
+
+  /* =========================================================
+     钢琴
+     ========================================================= */
+  var SEMIS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  var KEY_ROWS = [
+    ['KeyZ','KeyS','KeyX','KeyD','KeyC','KeyV','KeyG','KeyB','KeyH','KeyN','KeyJ','KeyM'],
+    ['KeyQ','Digit2','KeyW','Digit3','KeyE','KeyR','Digit5','KeyT','Digit6','KeyY','Digit7','KeyU']
+  ];
+  var KEY_LABELS = { Semicolon:';', Comma:',', Period:'.', Slash:'/', Quote:"'" };
+
+  function keyLabel(code){
+    if(KEY_LABELS[code]) return KEY_LABELS[code];
+    return code.replace('Key', '').replace('Digit', '');
+  }
+
+  /* 两套键位：
+     split —— 双手分区，音高从左到右递增，左右手各管一段（默认，符合钢琴/DAW 习惯）
+     rows  —— 双排两八度，音域大但右手分到的音少、黑键要够数字排 */
+  var LAYOUTS = {
+    split: {
+      hint: '左手 A–G 弹低音、右手 H–; 弹高音；黑键在上一排 W E T Y U O P',
+      white: [
+        { s:'C', o:0, c:'KeyA' }, { s:'D', o:0, c:'KeyS' }, { s:'E', o:0, c:'KeyD' },
+        { s:'F', o:0, c:'KeyF' }, { s:'G', o:0, c:'KeyG' }, { s:'A', o:0, c:'KeyH' },
+        { s:'B', o:0, c:'KeyJ' }, { s:'C', o:1, c:'KeyK' }, { s:'D', o:1, c:'KeyL' },
+        { s:'E', o:1, c:'Semicolon' }
+      ],
+      black: [
+        { s:'C#', o:0, c:'KeyW', after:0 }, { s:'D#', o:0, c:'KeyE', after:1 },
+        { s:'F#', o:0, c:'KeyT', after:3 }, { s:'G#', o:0, c:'KeyY', after:4 },
+        { s:'A#', o:0, c:'KeyU', after:5 }, { s:'C#', o:1, c:'KeyO', after:7 },
+        { s:'D#', o:1, c:'KeyP', after:8 }
+      ]
+    },
+    rows: {
+      hint: '下排 Z–M 弹 C5–B5、上排 Q–U 弹 C6–B6；黑键在 S D G H J 与 2 3 5 6 7',
+      white: [],
+      black: []
+    }
+  };
+  (function buildRowsLayout(){
+    var WS = [0,2,4,5,7,9,11];
+    var BS = [1,3,6,8,10];
+    var AFTER = [0,1,3,4,5];
+    for(var o = 0; o < 2; o++){
+      WS.forEach(function(semi){
+        LAYOUTS.rows.white.push({ s:SEMIS[semi], o:o, c:KEY_ROWS[o][semi] });
+      });
+      BS.forEach(function(semi, k){
+        LAYOUTS.rows.black.push({ s:SEMIS[semi], o:o, c:KEY_ROWS[o][semi], after:o*7 + AFTER[k] });
+      });
+    }
+  })();
+
+  var PN = {
+    notes: ['C5','C5','G5','G5','A5','A5','G5'],
+    idx: 0,
+    ok: 0,
+    bad: 0,
+    playing: false,
+    baseOct: 5,
+    mode: 'follow',
+    layout: 'split',
+    elByNote: {},
+    noteByCode: {},
+    codeByNote: {}
+  };
+  var voices = {};
+
+  /* 按住发声：起音 + 缓慢衰减；松开进入释放包络 */
+  function noteOn(note, code){
+    if(voices[code]) return;
+    var ctx = audio(), t = ctx.currentTime, f = freqOf(note);
+    var out = ctx.createGain();
+    var filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(5200, t);
+    filt.frequency.exponentialRampToValueAtTime(1500, t + 2.6);
+    out.connect(filt).connect(ctx.destination);
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.2, t + 0.01);
+    out.gain.exponentialRampToValueAtTime(0.055, t + 2.0);
+
+    var oscs = [];
+    [1,2,3,4].forEach(function(h, i){
+      var o = ctx.createOscillator();
+      o.type = i === 0 ? 'triangle' : 'sine';
+      o.frequency.value = f * h;
+      o.detune.value = i === 1 ? 3 : (i === 2 ? -4 : 0);
+      var g = ctx.createGain();
+      g.gain.value = i === 0 ? 1 : 0.32 / (i + 1);
+      o.connect(g).connect(out);
+      o.start(t);
+      oscs.push(o);
+    });
+    voices[code] = { out: out, oscs: oscs, note: note };
+
+    if(Object.keys(voices).length > 10){
+      keyUp(Object.keys(voices)[0], true);
+    }
+  }
+
+  function keyUp(code, fast){
+    var v = voices[code];
+    if(!v) return;
+    delete voices[code];
+    var ctx = audio(), t = ctx.currentTime;
+    if(v.out.gain.cancelScheduledValues) v.out.gain.cancelScheduledValues(t);
+    v.out.gain.setTargetAtTime(0.0001, t, fast ? 0.03 : 0.09);
+    v.oscs.forEach(function(o){
+      try{ o.stop(t + (fast ? 0.14 : 0.55)); }catch(e){}
+    });
+  }
+
+  function releaseAll(){
+    Object.keys(voices).forEach(function(c){ keyUp(c, true); });
+    $$('.wkey.active, .bkey.active').forEach(function(el){ el.classList.remove('active'); });
+  }
+
+  function pressKey(code){
+    var note = PN.noteByCode[code];
+    if(!note || voices[code]) return;
+    noteOn(note, code);
+    var el = PN.elByNote[note];
+    if(el) el.classList.add('active');
+    pnJudge(note);
+  }
+
+  function releaseKey(code){
+    var v = voices[code];
+    if(!v) return;
+    var note = v.note;
+    keyUp(code);
+    var el = PN.elByNote[note];
+    if(el) el.classList.remove('active');
+  }
+
+  function shiftOct(delta){
+    var next = clamp(PN.baseOct + delta, 3, 6);
+    if(next === PN.baseOct) return;
+    releaseAll();
+    PN.baseOct = next;
+    buildPiano(next);
+    pnFeedback('音域已切换到 C' + next + '–B' + (next + 1) + '，继续弹');
+  }
+
+  function pnFeedback(text, cls){
+    var el = $('#piano-feedback');
+    el.textContent = text;
+    el.className = 'feedback' + (cls ? ' ' + cls : '');
+  }
+  function pnRender(){
+    var notes = PN.notes.map(function(n, i){
+      return { name:n, hl: PN.mode === 'follow' && i === PN.idx };
+    });
+    renderStaff($('#piano-staff'), notes, 'treble');
+    $('#piano-progress').textContent = PN.mode === 'free' ? '自由' : PN.idx + ' / ' + PN.notes.length;
+    $('#piano-ok').textContent = PN.ok;
+    $('#piano-bad').textContent = PN.bad;
+  }
+  function pnReset(){
+    PN.idx = 0; PN.ok = 0; PN.bad = 0;
+    releaseAll();
+    pnRender();
+    pnFeedback(PN.mode === 'follow' ? '弹出高亮的音：点琴键或敲键盘都可以' : '自由弹奏：按住键发声，松开止音');
+  }
+
+  function pnJudge(name){
+    if(PN.mode !== 'follow' || PN.playing) return;
+    var target = PN.notes[PN.idx];
+    if(!target) return;
+    if(name === target){
+      PN.ok++;
+      pnFeedback('✓ ' + name + ' · ' + freqOf(name).toFixed(1) + ' Hz', 'ok');
+      PN.idx++;
+      if(PN.idx >= PN.notes.length){
+        pnFeedback('全部弹对！正确 ' + PN.ok + ' · 错误 ' + PN.bad + ' · 可以再来一遍', 'ok');
+        PN.playing = true;
+        setTimeout(function(){ PN.playing = false; }, 900);
+      }
+      pnRender();
+    } else {
+      PN.bad++;
+      pnFeedback('✗ 目标是 ' + target + '，你弹了 ' + name + ' —— 再听一次目标音', 'bad');
+      pnRender();
+    }
+  }
+
+  function pnKey(name, el){
+    if(PN.playing) return;
+    playTone(freqOf(name), 0.8);
+    el.classList.add('active');
+    setTimeout(function(){ el.classList.remove('active'); }, 180);
+    pnJudge(name);
+  }
+
+  function buildPiano(baseOct){
+    var L = LAYOUTS[PN.layout];
+    var box = $('#piano-keys');
+    box.innerHTML = '';
+    PN.elByNote = {}; PN.noteByCode = {}; PN.codeByNote = {};
+    var w = 100 / L.white.length;
+
+    L.white.forEach(function(n){
+      var note = n.s + (baseOct + n.o);
+      var key = document.createElement('div');
+      key.className = 'wkey';
+      key.dataset.note = note;
+      key.style.width = w + '%';
+      key.title = note + ' · 键盘 ' + keyLabel(n.c);
+      key.innerHTML = '<span class="klabel">' + keyLabel(n.c) + '</span><span class="knote">' + note + '</span>';
+      key.addEventListener('click', function(){ pnKey(note, key); });
+      box.appendChild(key);
+      PN.elByNote[note] = key;
+      PN.noteByCode[n.c] = note;
+      PN.codeByNote[note] = n.c;
+    });
+
+    L.black.forEach(function(n){
+      var note = n.s + (baseOct + n.o);
+      var key = document.createElement('div');
+      key.className = 'bkey';
+      key.dataset.note = note;
+      key.style.width = (w * 0.62) + '%';
+      key.style.left = ((n.after + 1) * w - w * 0.31) + '%';
+      key.title = note + ' · 键盘 ' + keyLabel(n.c);
+      key.innerHTML = '<span class="klabel">' + keyLabel(n.c) + '</span>';
+      key.addEventListener('click', function(){ pnKey(note, key); });
+      box.appendChild(key);
+      PN.elByNote[note] = key;
+      PN.noteByCode[n.c] = note;
+      PN.codeByNote[note] = n.c;
+    });
+
+    var first = L.white[0], last = L.white[L.white.length - 1];
+    $('#kb-range').textContent = first.s + (baseOct + first.o) + '–' + last.s + (baseOct + last.o);
+    $('#kb-hint').textContent = L.hint;
+  }
+
+  function setLayout(name){
+    if(!LAYOUTS[name] || name === PN.layout) return;
+    releaseAll();
+    PN.layout = name;
+    PN.baseOct = 5;
+    buildPiano(PN.baseOct);
+    $$('#piano-layout button').forEach(function(x){ x.classList.toggle('on', x.dataset.layout === name); });
+    pnRender();
+    pnFeedback('键位已切换为「' + (name === 'split' ? '双手分区' : '双排两八度') + '」，先试试手感');
+  }
+
+  function initPiano(){
+    buildPiano(PN.baseOct);
+    pnRender();
+
+    $('#piano-reset').addEventListener('click', pnReset);
+    $('#kb-down').addEventListener('click', function(){ shiftOct(-1); });
+    $('#kb-up').addEventListener('click', function(){ shiftOct(1); });
+
+    $$('#piano-layout button').forEach(function(b){
+      b.addEventListener('click', function(){ setLayout(b.dataset.layout); });
+    });
+
+    $$('#piano-mode button').forEach(function(b){
+      b.addEventListener('click', function(){
+        PN.mode = b.dataset.mode;
+        $$('#piano-mode button').forEach(function(x){ x.classList.toggle('on', x === b); });
+        PN.idx = 0; PN.ok = 0; PN.bad = 0;
+        releaseAll();
+        pnRender();
+        pnFeedback(PN.mode === 'follow'
+          ? '跟弹模式：弹出高亮的音，弹对自动下一音'
+          : '自由弹奏：按住键发声、松开止音，不会判对错');
+      });
+    });
+
+    $('#piano-demo').addEventListener('click', function(){
+      if(PN.playing) return;
+      releaseAll();
+      PN.playing = true;
+      var i = 0;
+      var step = function(){
+        if(i >= PN.notes.length){
+          PN.playing = false;
+          PN.idx = 0;
+          pnRender();
+          pnFeedback('示范结束，试试点琴键或敲键盘跟弹');
+          return;
+        }
+        PN.idx = i;
+        pnRender();
+        playTone(freqOf(PN.notes[i]), 0.55);
+        i++;
+        setTimeout(step, 520);
+      };
+      step();
+    });
+
+    document.addEventListener('keydown', function(e){
+      if(currentView !== 'piano') return;
+      if(e.metaKey || e.ctrlKey || e.altKey) return;
+      if(e.code === 'BracketLeft'){ e.preventDefault(); shiftOct(-1); return; }
+      if(e.code === 'BracketRight'){ e.preventDefault(); shiftOct(1); return; }
+      if(e.repeat) return;
+      if(!PN.noteByCode[e.code]) return;
+      e.preventDefault();
+      pressKey(e.code);
+    });
+    document.addEventListener('keyup', function(e){
+      if(!PN.noteByCode[e.code]) return;
+      releaseKey(e.code);
+    });
+    window.addEventListener('blur', releaseAll);
+  }
+
+  /* =========================================================
+     小提琴
+     ========================================================= */
+  var VN = {
+    note: 'A4',
+    running: false,
+    timer: null,
+    cents: 0,
+    pts: []
+  };
+
+  function polar(cx, cy, r, deg){
+    var a = deg * Math.PI / 180;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  }
+  function centsToDeg(c){ return 270 + c * 2.4; }
+
+  function buildDial(){
+    var cx = 160, cy = 125, r = 104;
+    var s = '<svg id="dial" viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg">';
+    var p0 = polar(cx, cy, r, 150), p1 = polar(cx, cy, r, 390);
+    s += '<path d="M ' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' A ' + r + ' ' + r + ' 0 1 1 ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) + '" fill="none" stroke="#ded6c5" stroke-width="7" stroke-linecap="round"/>';
+
+    var g0 = polar(cx, cy, r, centsToDeg(-5)), g1 = polar(cx, cy, r, centsToDeg(5));
+    s += '<path d="M ' + g0[0].toFixed(1) + ' ' + g0[1].toFixed(1) + ' A ' + r + ' ' + r + ' 0 0 1 ' + g1[0].toFixed(1) + ' ' + g1[1].toFixed(1) + '" fill="none" stroke="#5f9c78" stroke-width="7" stroke-linecap="round"/>';
+
+    for(var c = -50; c <= 50; c += 5){
+      var major = (c % 25 === 0);
+      var a0 = polar(cx, cy, r - 9, centsToDeg(c));
+      var a1 = polar(cx, cy, r - (major ? 20 : 15), centsToDeg(c));
+      s += '<line x1="' + a0[0].toFixed(1) + '" y1="' + a0[1].toFixed(1) + '" x2="' + a1[0].toFixed(1) + '" y2="' + a1[1].toFixed(1) + '" stroke="' + (major ? '#8a8272' : '#c9c1b1') + '" stroke-width="' + (major ? 2 : 1.2) + '"/>';
+      if(major && (c === -50 || c === 50)){
+        var lp = polar(cx, cy, r - 34, centsToDeg(c));
+        s += '<text x="' + lp[0].toFixed(1) + '" y="' + (lp[1] + 4).toFixed(1) + '" font-size="11" fill="#8a8272" text-anchor="middle">' + (c > 0 ? '+50' : '-50') + '</text>';
+      }
+    }
+    s += '<line id="needle" x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy - r + 14) + '" stroke="#b0522f" stroke-width="3" stroke-linecap="round"/>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="#b0522f"/>';
+    s += '<text x="' + cx + '" y="' + (cy + 34) + '" font-size="11" fill="#8a8272" text-anchor="middle">音分偏差</text>';
+    s += '</svg>';
+    $('#dial').outerHTML = s;
+  }
+
+  function vnDrawCurve(){
+    var w = 560, h = 140, mid = 70;
+    var n = VN.pts.length;
+    var s = '<svg id="curve" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    s += '<rect x="0" y="' + (mid - 22) + '" width="' + w + '" height="44" fill="#dcebe1" opacity="0.55"/>';
+    s += '<line x1="0" y1="' + mid + '" x2="' + w + '" y2="' + mid + '" stroke="#c9c1b1" stroke-width="1" stroke-dasharray="4 5"/>';
+    s += '<line x1="0" y1="' + (mid - 11) + '" x2="' + w + '" y2="' + (mid - 11) + '" stroke="#d8e5db" stroke-width="1"/>';
+    s += '<line x1="0" y1="' + (mid + 11) + '" x2="' + w + '" y2="' + (mid + 11) + '" stroke="#d8e5db" stroke-width="1"/>';
+    if(!n){
+      s += '<text x="' + (w / 2) + '" y="' + (mid + 50) + '" font-size="12" fill="#9a9385" text-anchor="middle">点击「开始模拟检测」查看实时音准曲线</text>';
+    }
+    var pts = [];
+    for(var i = 0; i < n; i++){
+      var x = (i / Math.max(1, n - 1)) * w;
+      var y = clamp(mid - VN.pts[i] * 1.6, 6, h - 6);
+      pts.push(x.toFixed(1) + ',' + y.toFixed(1));
+    }
+    s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#b0522f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    if(pts.length){
+      var last = pts[pts.length - 1].split(',');
+      s += '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="4" fill="#b0522f"/>';
+    }
+    s += '</svg>';
+    $('#curve').outerHTML = s;
+  }
+
+  function vnUpdate(){
+    var f = freqOf(VN.note) * Math.pow(2, VN.cents / 1200);
+    var needle = document.getElementById('needle');
+    if(needle) needle.setAttribute('transform', 'rotate(' + (VN.cents * 2.4).toFixed(2) + ' 160 125)');
+
+    $('#tuner-note').textContent = VN.note;
+    $('#tuner-freq').textContent = f.toFixed(1) + ' Hz';
+    var cEl = $('#tuner-cents');
+    cEl.textContent = (VN.cents >= 0 ? '+' : '') + VN.cents.toFixed(0) + ' 音分';
+    var abs = Math.abs(VN.cents);
+    cEl.style.color = abs <= 5 ? 'var(--green)' : abs <= 15 ? 'var(--gold)' : 'var(--red)';
+
+    VN.pts.push(VN.cents);
+    if(VN.pts.length > 70) VN.pts.shift();
+    vnDrawCurve();
+
+    var mean = VN.pts.reduce(function(a, b){ return a + Math.abs(b); }, 0) / VN.pts.length;
+    var stable = VN.pts.filter(function(v){ return Math.abs(v) <= 10; }).length / VN.pts.length * 100;
+    var max = Math.max.apply(null, VN.pts), min = Math.min.apply(null, VN.pts);
+    $('#avg-dev').textContent = '±' + mean.toFixed(0);
+    $('#stable-pct').textContent = stable.toFixed(0) + '%';
+    $('#range-dev').textContent = (max - min).toFixed(0);
+  }
+
+  function vnLoop(){
+    VN.cents = VN.cents * 0.9 + (Math.random() - 0.5) * 5.6 + Math.sin(performance.now() / 820) * 1.1;
+    VN.cents = clamp(VN.cents, -46, 46);
+    vnUpdate();
+  }
+
+  function vnStart(){
+    if(VN.running) return;
+    VN.running = true;
+    VN.pts = [];
+    $('#tuner-toggle').textContent = '停止检测';
+    VN.timer = setInterval(vnLoop, 70);
+  }
+  function vnStop(){
+    VN.running = false;
+    clearInterval(VN.timer);
+    $('#tuner-toggle').textContent = '开始模拟检测';
+  }
+
+  function initViolin(){
+    buildDial();
+    vnDrawCurve();
+    $('#tuner-toggle').addEventListener('click', function(){
+      if(VN.running) vnStop(); else vnStart();
+    });
+    $$('#string-btns button').forEach(function(b){
+      b.addEventListener('click', function(){
+        VN.note = b.dataset.note;
+        VN.cents = 0;
+        VN.pts = [];
+        $$('#string-btns button').forEach(function(x){ x.classList.toggle('on', x === b); });
+        $('#curve-target').textContent = '目标 ' + VN.note;
+        playTone(freqOf(VN.note), 0.8);
+        vnUpdate();
+      });
+    });
+    buildFretboard();
+  }
+
+  function buildFretboard(){
+    var strings = [
+      { label:'G', y:28,  notes:['A3','B3','C4','D4'] },
+      { label:'D', y:64,  notes:['E4','F4','G4','A4'] },
+      { label:'A', y:100, notes:['B4','C5','D5','E5'] },
+      { label:'E', y:136, notes:['F5','G5','A5','B5'] }
+    ];
+    var x0 = 54, x1 = 540, s = '<svg id="fretboard" viewBox="0 0 560 160" xmlns="http://www.w3.org/2000/svg">';
+    strings.forEach(function(st){
+      s += '<line x1="' + x0 + '" y1="' + st.y + '" x2="' + x1 + '" y2="' + st.y + '" stroke="#b8ae9b" stroke-width="1.6"/>';
+      s += '<text x="16" y="' + (st.y + 5) + '" font-size="14" font-weight="700" fill="#5f5b52">' + st.label + '</text>';
+    });
+    for(var i = 1; i <= 4; i++){
+      var x = x0 + i * 88;
+      if(x > x1) break;
+      s += '<line x1="' + x + '" y1="12" x2="' + x + '" y2="148" stroke="#ded6c5" stroke-width="1"/>';
+    }
+    strings.forEach(function(st){
+      st.notes.forEach(function(n, i){
+        var x = x0 + (i + 1) * 88;
+        s += '<g class="fb-note" data-note="' + n + '" style="cursor:pointer">';
+        s += '<circle cx="' + x + '" cy="' + st.y + '" r="13" fill="#f2ddd2" stroke="#b0522f" stroke-width="1.4"/>';
+        s += '<text x="' + x + '" y="' + (st.y + 4) + '" font-size="10" fill="#8d3f22" text-anchor="middle">' + n + '</text>';
+        s += '</g>';
+      });
+    });
+    s += '</svg>';
+    $('#fretboard').outerHTML = s;
+    $$('.fb-note').forEach(function(g){
+      g.addEventListener('click', function(){ playTone(freqOf(g.dataset.note), 0.8); });
+    });
+  }
+
+  /* =========================================================
+     进度热力图
+     ========================================================= */
+  function heatColor(m){
+    if(!m) return '#e9e3d6';
+    if(m < 12) return '#dce9df';
+    if(m < 20) return '#b6d3bf';
+    if(m < 30) return '#7fb193';
+    return '#4c8567';
+  }
+  function rnd(i){
+    var x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+    return Math.abs(x - Math.floor(x));
+  }
+  function initProgress(){
+    var box = $('#heatmap');
+    box.innerHTML = '';
+    var today = new Date();
+    for(var i = 0; i < 168; i++){
+      var d = new Date(today.getTime() - (167 - i) * 86400000);
+      var r = rnd(i);
+      var minutes = r < 0.16 ? 0 : Math.round(6 + rnd(i + 7) * 34);
+      var cell = document.createElement('div');
+      cell.className = 'hm';
+      cell.style.background = heatColor(minutes);
+      cell.title = (d.getMonth() + 1) + '月' + d.getDate() + '日 · ' + minutes + ' 分钟';
+      box.appendChild(cell);
+    }
+  }
+
+  /* =========================================================
+     曲库
+     ========================================================= */
+  var LIB = [
+    { t:'小星星', c:'法国民谣', inst:'piano', d:1, s:'ready', n:'右手单音 · 入门' },
+    { t:'欢乐颂', c:'Beethoven', inst:'piano', d:1, s:'ready', n:'主题旋律' },
+    { t:'G大调小步舞曲', c:'Petzold（旧传巴赫）', inst:'piano', d:2, s:'ready', n:'BWV Anh.114 · 右手' },
+    { t:'卡农', c:'Pachelbel', inst:'piano', d:3, s:'ready', n:'D 大调 · 简化版' },
+    { t:'致爱丽丝', c:'Beethoven', inst:'piano', d:3, s:'ready', n:'主题段' },
+    { t:'土耳其进行曲', c:'Mozart', inst:'piano', d:4, s:'soon', n:'K.331 第三乐章' },
+    { t:'月光奏鸣曲 第一乐章', c:'Beethoven', inst:'piano', d:4, s:'soon', n:'Op.27 No.2' },
+    { t:'梦中的婚礼', c:'Paul de Senneville', inst:'piano', d:4, s:'import', n:'1978 · 仍在版权保护期' },
+    { t:'City of Stars', c:'Justin Hurwitz', inst:'piano', d:3, s:'import', n:'La La Land · 2016' },
+    { t:"Mia & Sebastian's Theme", c:'Justin Hurwitz', inst:'piano', d:4, s:'import', n:'La La Land · 2016' },
+    { t:'小星星', c:'法国民谣', inst:'violin', d:1, s:'ready', n:'A 弦 · 第一把位' },
+    { t:'G弦上的咏叹调', c:'Bach', inst:'violin', d:2, s:'ready', n:'慢速长音 · 音准' },
+    { t:'卡农', c:'Pachelbel', inst:'violin', d:3, s:'ready', n:'简化独奏版' },
+    { t:'沉思', c:'Massenet', inst:'violin', d:4, s:'soon', n:'Thaïs 间奏曲' },
+    { t:'巴赫无伴奏组曲', c:'Bach', inst:'violin', d:5, s:'soon', n:'BWV 1007 前奏曲' }
+  ];
+  var STATUS = {
+    ready:  { label:'可跟弹', cls:'ready' },
+    soon:   { label:'规划中', cls:'soon' },
+    import: { label:'需导入', cls:'import' }
+  };
+
+  function toast(msg){
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+  }
+
+  function renderLibrary(filter){
+    var grid = $('#lib-grid');
+    grid.innerHTML = '';
+    LIB.filter(function(p){ return filter === 'all' || p.inst === filter; }).forEach(function(p){
+      var inst = p.inst === 'piano' ? '钢琴' : '小提琴';
+      var st = STATUS[p.s];
+      var el = document.createElement('article');
+      el.className = 'card piece';
+      el.innerHTML =
+        '<div class="piece-top"><span class="pill">' + inst + '</span>' +
+        '<span class="diff">' + '●'.repeat(p.d) + '○'.repeat(5 - p.d) + '</span></div>' +
+        '<h3>' + p.t + '</h3>' +
+        '<div class="composer">' + p.c + ' · ' + p.n + '</div>' +
+        '<div class="piece-foot"><span class="status ' + st.cls + '">' + st.label + '</span>' +
+        '<button class="btn btn-ghost btn-sm">' + (p.s === 'ready' ? '练习' : p.s === 'import' ? '导入说明' : '等更新') + '</button></div>';
+      var btn = el.querySelector('button');
+      btn.addEventListener('click', function(){
+        if(p.s === 'ready'){
+          go('piano');
+          toast('原型先加载《小星星》；正式版会按曲目自动载入《' + p.t + '》');
+        } else if(p.s === 'import'){
+          toast('正式版支持导入 MusicXML：曲谱只保存在本机，不上传');
+        } else {
+          toast('《' + p.t + '》还在排期里，M2 之后逐步加入');
+        }
+      });
+      grid.appendChild(el);
+    });
+  }
+
+  function initLibrary(){
+    renderLibrary('all');
+    $$('#lib-filter button').forEach(function(b){
+      b.addEventListener('click', function(){
+        $$('#lib-filter button').forEach(function(x){ x.classList.toggle('on', x === b); });
+        renderLibrary(b.dataset.filter);
+      });
+    });
+  }
+
+  /* =========================================================
+     节拍器
+     ========================================================= */
+  var MET = { bpm:72, playing:false, timer:null, beat:0, beats:4, taps:[] };
+
+  function metUpdate(){
+    $('#bpm').childNodes[0].nodeValue = MET.bpm;
+    $$('#beat-dots i').forEach(function(d, i){
+      d.classList.toggle('on', MET.playing && i === MET.beat);
+    });
+  }
+  function metTick(){
+    playClick(MET.beat === 0);
+    var p = $('#pend');
+    p.classList.toggle('tick', MET.beat % 2 === 0);
+    p.classList.toggle('tock', MET.beat % 2 !== 0);
+    MET.beat = (MET.beat + 1) % MET.beats;
+    metUpdate();
+  }
+  function metStart(){
+    if(MET.playing) return;
+    MET.playing = true;
+    MET.beat = 0;
+    metTick();
+    MET.timer = setInterval(metTick, 60000 / MET.bpm);
+    $('#metro-toggle').textContent = '■ 停止';
+  }
+  function metStop(){
+    MET.playing = false;
+    clearInterval(MET.timer);
+    $('#metro-toggle').textContent = '▶ 开始';
+    metUpdate();
+    var p = $('#pend');
+    p.classList.remove('tick','tock');
+  }
+  function initTools(){
+    var range = $('#bpm-range');
+    range.addEventListener('input', function(){
+      MET.bpm = +range.value;
+      metUpdate();
+      if(MET.playing){
+        clearInterval(MET.timer);
+        MET.timer = setInterval(metTick, 60000 / MET.bpm);
+      }
+    });
+    $('#metro-toggle').addEventListener('click', function(){
+      if(MET.playing) metStop(); else metStart();
+    });
+    $('#tap').addEventListener('click', function(){
+      var now = Date.now();
+      if(MET.taps.length && now - MET.taps[MET.taps.length - 1] > 2000) MET.taps = [];
+      MET.taps.push(now);
+      if(MET.taps.length > 6) MET.taps.shift();
+      if(MET.taps.length >= 2){
+        var sum = 0;
+        for(var i = 1; i < MET.taps.length; i++) sum += MET.taps[i] - MET.taps[i - 1];
+        var avg = sum / (MET.taps.length - 1);
+        MET.bpm = clamp(Math.round(60000 / avg), 40, 208);
+        range.value = MET.bpm;
+        metUpdate();
+        if(MET.playing){
+          clearInterval(MET.timer);
+          MET.timer = setInterval(metTick, 60000 / MET.bpm);
+        }
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.code === 'Space' && currentView === 'tools'){
+        e.preventDefault();
+        if(MET.playing) metStop(); else metStart();
+      }
+    });
+    var bars = $('#rec-bars');
+    for(var i = 0; i < 42; i++){
+      var b = document.createElement('i');
+      b.style.height = (14 + Math.abs(Math.sin(i * 1.7)) * 44) + '%';
+      bars.appendChild(b);
+    }
+  }
+
+  /* =========================================================
+     快捷键
+     ========================================================= */
+  document.addEventListener('keydown', function(e){
+    if(currentView !== 'sight') return;
+    var n = parseInt(e.key, 10);
+    if(n >= 1 && n <= 4){
+      var btns = $$('.opt');
+      if(btns[n - 1] && !btns[n - 1].disabled) btns[n - 1].click();
+    }
+  });
+
+  /* =========================================================
+     启动
+     ========================================================= */
+  try{ initHome(); }catch(e){ console.error(e); }
+  try{ initSight(); }catch(e){ console.error(e); }
+  try{ initPiano(); }catch(e){ console.error(e); }
+  try{ initViolin(); }catch(e){ console.error(e); }
+  try{ initLibrary(); }catch(e){ console.error(e); }
+  try{ initProgress(); }catch(e){ console.error(e); }
+  try{ initTools(); }catch(e){ console.error(e); }
+
+  var hash = (location.hash || '').replace('#', '');
+  go(VIEWS.indexOf(hash) >= 0 ? hash : 'home');
+
+  window.addEventListener('error', function(e){
+    document.documentElement.setAttribute('data-js-error', String(e.message || 'error'));
+  });
+})();
+</script>
+</body>
+</html>
